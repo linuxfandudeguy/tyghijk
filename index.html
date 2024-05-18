@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slit-Scan Webcam Effect</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #222;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        video, canvas {
+            display: none;
+        }
+
+        canvas {
+            display: block;
+            border: 1px solid #fff;
+            margin-top: 20px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        button:active {
+            background-color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Slit-Scan Webcam Effect</h1>
+    <video id="webcam" autoplay></video>
+    <canvas id="slitscan"></canvas>
+    <button id="startButton">Start Slit-Scan Effect</button>
+    <script>
+        // Select the elements
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('slitscan');
+        const context = canvas.getContext('2d');
+        const startButton = document.getElementById('startButton');
+
+        let offset = 0;
+        const sliceWidth = 1; // Width of each vertical slice
+
+        // Function to set up the canvas size to match the video size
+        function setupCanvas() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            video.style.display = 'none';
+            canvas.style.display = 'block';
+        }
+
+        // Access the user's webcam
+        function startSlitScan() {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                    video.onloadedmetadata = () => {
+                        setupCanvas();
+                        video.play();
+                        drawSlitScan();
+                    };
+                })
+                .catch(error => {
+                    console.error('Error accessing the webcam:', error);
+                });
+        }
+
+        // Draw the slit-scan effect
+        function drawSlitScan() {
+            if (video.paused || video.ended) {
+                return;
+            }
+
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Draw the current video frame as a vertical slice
+            context.drawImage(video, offset, 0, sliceWidth, height, offset, 0, sliceWidth, height);
+
+            // Move the offset to the right, wrap around if necessary
+            offset = (offset + sliceWidth) % width;
+
+            requestAnimationFrame(drawSlitScan);
+        }
+
+        // Add event listener to the start button
+        startButton.addEventListener('click', () => {
+            startButton.style.display = 'none';
+            startSlitScan();
+        });
+    </script>
+</body>
+</html>
